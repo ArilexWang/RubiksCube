@@ -13,7 +13,6 @@ var PLUS = 20;
 var CENTER = 0;
 var MINUS = -20;
 
-
 var SINGLE_ANGLE = Math.PI/40;
 var TOTAL_TIMES = 20;
 
@@ -27,7 +26,7 @@ var activeCubes = [];   //转动的方块
 
 var parent;     //父类魔方
 
-
+var isMoving = false;
 
 //方向
 var direction = [[1,1],[1,0],[1,-1],[0,-1],[-1,-1],[-1,0],[-1,1],[0,1]];
@@ -145,6 +144,7 @@ function changeObj() {
 
 
     this.centerRotate = function(element,direct,axis){
+        isMoving = true;
         var time = 0;                      //旋转次数
         //第三步
         parent.rotation.set(0,0,0);
@@ -175,6 +175,7 @@ function changeObj() {
                     THREE.SceneUtils.detach(cube, parent, scene);
                 })
                 scene.remove(parent);
+                isMoving = false;
                 clearInterval(timer);
             }
         }
@@ -208,65 +209,65 @@ function setActiveCubes(axis,direction) {
 }
 
 
+var idRotateMap = {
+    'turn_right': [RIGHT, 'y'],
+    'turn_left': [LEFT, 'y'],
+    'right_up': [RIGHT,'z'],
+    'right_down': [LEFT,'z'],
+    'left_up': [LEFT,'x'],
+    'left_down': [RIGHT,'x'],
+    'row1_right': [RIGHT,'y'],
+    'row2_right': [RIGHT,'y'],
+    'row3_right': [RIGHT,'y'],
+    'row1_left': [LEFT,'y'],
+    'row2_left': [LEFT,'y'],
+    'row3_left': [LEFT,'y'],
+    'xColumn1_right': [LEFT,'x'],
+    'xColumn2_right': [LEFT,'x'],
+    'xColumn3_right': [LEFT,'x'],
+    'xColumn1_left': [RIGHT,'x'],
+    'xColumn2_left': [RIGHT,'x'],
+    'xColumn3_left': [RIGHT,'x'],
+    'zColumn1_right': [RIGHT,'z'],
+    'zColumn2_right': [RIGHT,'z'],
+    'zColumn3_right': [RIGHT,'z'],
+    'zColumn1_left': [LEFT,'z'],
+    'zColumn2_left': [LEFT,'z'],
+    'zColumn3_left': [LEFT,'z'],
+}
+
+var idPositionMap = {
+    'row1_right': PLUS,
+    'row1_left': PLUS,
+    'row2_right': CENTER,
+    'row2_left': CENTER,
+    'row3_right': MINUS,
+    'row3_left': MINUS,
+    'xColumn1_right': PLUS,
+    'xColumn1_left': PLUS,
+    'xColumn2_right': CENTER,
+    'xColumn2_left': CENTER,
+    'xColumn3_right': MINUS,
+    'xColumn3_left': MINUS,
+    'zColumn1_right': PLUS,
+    'zColumn1_left': PLUS,
+    'zColumn2_right': CENTER,
+    'zColumn2_left': CENTER,
+    'zColumn3_right': MINUS,
+    'zColumn3_left': MINUS,
+
+}
+
 $(document).ready(function(){
     Obj.ThreeStart();
-
-    var idRotateMap = {
-        'turn_right': [RIGHT, 'y'],
-        'turn_left': [LEFT, 'y'],
-        'right_up': [RIGHT,'z'],
-        'right_down': [LEFT,'z'],
-        'left_up': [LEFT,'x'],
-        'left_down': [RIGHT,'x'],
-        'row1_right': [RIGHT,'y'],
-        'row2_right': [RIGHT,'y'],
-        'row3_right': [RIGHT,'y'],
-        'row1_left': [LEFT,'y'],
-        'row2_left': [LEFT,'y'],
-        'row3_left': [LEFT,'y'],
-        'xColumn1_right': [LEFT,'x'],
-        'xColumn2_right': [LEFT,'x'],
-        'xColumn3_right': [LEFT,'x'],
-        'xColumn1_left': [RIGHT,'x'],
-        'xColumn2_left': [RIGHT,'x'],
-        'xColumn3_left': [RIGHT,'x'],
-        'zColumn1_right': [RIGHT,'z'],
-        'zColumn2_right': [RIGHT,'z'],
-        'zColumn3_right': [RIGHT,'z'],
-        'zColumn1_left': [LEFT,'z'],
-        'zColumn2_left': [LEFT,'z'],
-        'zColumn3_left': [LEFT,'z'],
-    }
-
-    var idPositionMap = {
-        'row1_right': PLUS,
-        'row1_left': PLUS,
-        'row2_right': CENTER,
-        'row2_left': CENTER,
-        'row3_right': MINUS,
-        'row3_left': MINUS,
-        'xColumn1_right': PLUS,
-        'xColumn1_left': PLUS,
-        'xColumn2_right': CENTER,
-        'xColumn2_left': CENTER,
-        'xColumn3_right': MINUS,
-        'xColumn3_left': MINUS,
-        'zColumn1_right': PLUS,
-        'zColumn1_left': PLUS,
-        'zColumn2_right': CENTER,
-        'zColumn2_left': CENTER,
-        'zColumn3_right': MINUS,
-        'zColumn3_left': MINUS,
-
-    }
-
 
 
     $('.board').click(function(event) {
         var id = event.target.id;
         var direction = idRotateMap[id][0];
         var axis = idRotateMap[id][1];
-        transObj.centerRotate(cubes,direction, axis);
+        if (isMoving === false)
+            transObj.centerRotate(cubes,direction, axis);
     })
 
     $('.row').click((function (event) {
@@ -277,7 +278,7 @@ $(document).ready(function(){
 
         setActiveCubes(axis,position);
 
-        transObj.centerRotate(activeCubes,direction,axis);
+        (isMoving === false) && transObj.centerRotate(activeCubes,direction,axis);
     }))
     $('.xColumn').click((function (event) {
         var id = event.target.id;
@@ -287,7 +288,7 @@ $(document).ready(function(){
 
         setActiveCubes(axis,position);
 
-        transObj.centerRotate(activeCubes,direction,axis);
+        (isMoving === false) && transObj.centerRotate(activeCubes,direction,axis);
     }))
 
     $('.zColumn').click((function (event) {
@@ -298,7 +299,7 @@ $(document).ready(function(){
 
         setActiveCubes(axis,position);
 
-        transObj.centerRotate(activeCubes,direction,axis);
+        (isMoving === false) && transObj.centerRotate(activeCubes,direction,axis);
     }))
     
 })
