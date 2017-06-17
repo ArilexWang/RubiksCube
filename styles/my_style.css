@@ -1,0 +1,16 @@
+#canvers-frame{
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    height: 600px;
+    background-color: #eeeeee;
+}
+
+.board{
+    /*border: 2px black solid;*/
+    display: inline-block;
+}
+
+.row{
+    display: inline-block;
+}
