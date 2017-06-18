@@ -19,6 +19,7 @@ var TOTAL_TIMES = 20;
 var scene;      //场景
 var camera;     //相机
 var renderer;   //渲染器
+var stats;      //监测器
 
 
 var cubes = []; //所有魔方
@@ -27,6 +28,7 @@ var activeCubes = [];   //转动的方块
 var parent;     //父类魔方
 
 var isMoving = false;
+var isRecoving = false;
 
 //方向
 var direction = [[1,1],[1,0],[1,-1],[0,-1],[-1,-1],[-1,0],[-1,1],[0,1]];
@@ -37,6 +39,13 @@ var hexs = [0xFFFFFF,0xFDCC09,0xDC422F,0xFF6C00,0x3D81F6,0x009D54];
 
 //初始化类，用于初始化魔方，场景，相机，渲染器
 function initObj(){
+    this.initStats = function () {
+        stats = new Stats();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = '0px';
+        stats.domElement.style.top = '0px';
+        $('#canvers-frame').append(stats.domElement);
+    }
     this.initSce = function () {
         scene = new THREE.Scene();
     }
@@ -131,8 +140,11 @@ function initObj(){
         this.initCube();
         this.initCamera();
         this.initRenderer();
+
         //debug用
         //this.initGrid();
+        //this.initStats();
+
         this.render();
     }
 }
@@ -140,24 +152,30 @@ initObj.prototype={
     constructor: initObj
 }
 
+var movedStack = [];
+
 function changeObj() {
 
 
     this.centerRotate = function(element,direct,axis){
         isMoving = true;
-        var time = 0;                      //旋转次数
-        //第三步
+
+        (!isRecoving) && movedStack.push({element: element, direct: direct, axis: axis});
+
+        //第一步
         parent.rotation.set(0,0,0);
         parent.updateMatrixWorld();
 
-        //第四步
+        //第二步
+        scene.add(parent);
+
+        //第三步
         element.forEach(function (e) {
             THREE.SceneUtils.attach(e,scene,parent);
         })
 
-        //第五步
-        scene.add(parent);
 
+        var time = 0;                      //旋转次数
         //单次旋转
         function singleTurn(){
             //父类在对应轴上进行旋转
@@ -169,9 +187,9 @@ function changeObj() {
                 parent.updateMatrixWorld();
 
                 element.forEach(function (cube) {
-                    //对应第一步：更新每个魔方信息
+                    //第四步：更新每个魔方信息
                     cube.updateMatrixWorld();
-                    //第二步：解除绑定
+                    //第五步：解除绑定
                     THREE.SceneUtils.detach(cube, parent, scene);
                 })
                 scene.remove(parent);
@@ -182,6 +200,7 @@ function changeObj() {
 
         var timer = setInterval(singleTurn,FRAME_SPEED);
     }
+
 }
 changeObj.prototype={
     constructor: changeObj
@@ -196,7 +215,6 @@ function nearlyEqual(a, b, d) {
     d = d || 0.001;
     return Math.abs(a - b) <= d;
 }
-
 
 //设置需要旋转的魔方
 function setActiveCubes(axis,direction) {
@@ -258,6 +276,45 @@ var idPositionMap = {
 
 }
 
+var ids = [
+    'row1_right',
+    'row1_left',
+    'row2_right',
+    'row2_left',
+    'row3_right',
+    'row3_left',
+    'xColumn1_right',
+    'xColumn1_left',
+    'xColumn2_right',
+    'xColumn2_left',
+    'xColumn3_right',
+    'xColumn3_left',
+    'zColumn1_right',
+    'zColumn1_left',
+    'zColumn2_right',
+    'zColumn2_left',
+    'zColumn3_right',
+    'zColumn3_left'
+]
+
+var moveStack = [];
+
+function getRandomMove() {
+    for(var i = 0;i < 10;i++){
+        var num = Math.random()*17;
+        num = parseInt(num);
+        var tempid = ids[num];
+        var position = idPositionMap[tempid];
+        var direction = idRotateMap[tempid][0];
+        var axis = idRotateMap[tempid][1];
+        moveStack.push({position: position,direction: direction, axis: axis});
+    }
+
+}
+
+
+
+
 $(document).ready(function(){
     Obj.ThreeStart();
 
@@ -301,5 +358,50 @@ $(document).ready(function(){
 
         (isMoving === false) && transObj.centerRotate(activeCubes,direction,axis);
     }))
+
+    $('.function').click(function (event) {
+        var id = event.target.id;
+        var time = 0;
+        if (id === 'random'){
+            getRandomMove();
+            var timer = setInterval(function (args) {
+                var move = moveStack.pop();
+                var position = move.position;
+                var direction = move.direction;
+                var axis = move.axis;
+                setActiveCubes(axis,position);
+                (isMoving === false) && transObj.centerRotate(activeCubes,direction,axis);
+                time++;
+
+                if (time === 10){
+                    clearInterval(timer);
+                }
+            },500)
+
+        }
+        else if (id === 'recover'){
+            var length = movedStack.length;
+            console.log(movedStack)
+            var timer = setInterval(function (args) {
+
+                if(length === 0){
+                    clearInterval(timer);
+                    isRecoving = false;
+                }
+                else {
+                    isRecoving = true;
+                    var move = movedStack.pop();
+                    console.log(movedStack);
+                    //console.log(movedStack);
+                    var element = move.element;
+                    var direct = -move.direct;
+                    var axis = move.axis;
+                    (isMoving === false) && transObj.centerRotate(element,direct,axis);
+                    length--;
+                }
+            },500)
+        }
+    })
+
     
 })
