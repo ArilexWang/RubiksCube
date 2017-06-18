@@ -392,7 +392,6 @@ $(document).ready(function(){
                     isRecoving = true;
                     var move = movedStack.pop();
                     console.log(movedStack);
-                    //console.log(movedStack);
                     var element = move.element;
                     var direct = -move.direct;
                     var axis = move.axis;
